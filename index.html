@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoBrick Planner</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- TOP BAR -->
+  <header id="topbar">
+    <div id="tb-brand">
+      <span class="tb-logo">🧱</span>
+      <span class="tb-title">EcoBrick</span>
+      <input id="project-name" type="text" value="Minha Casa" title="Nome do projeto">
+    </div>
+    <div id="tb-actions">
+      <button id="btn-undo" class="tb-btn icon-btn" title="Desfazer Ctrl+Z">
+        <svg viewBox="0 0 16 16"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466z"/></svg>
+        Desfazer
+      </button>
+      <button id="btn-redo" class="tb-btn icon-btn" title="Refazer Ctrl+Y">
+        <svg viewBox="0 0 16 16"><path d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>
+        Refazer
+      </button>
+      <div class="tb-sep"></div>
+      <button id="btn-new"  class="tb-btn">Novo</button>
+      <button id="btn-save" class="tb-btn">Salvar</button>
+      <label  id="lbl-load" class="tb-btn">Abrir<input id="file-input" type="file" accept=".json"></label>
+      <div class="tb-sep"></div>
+      <button id="btn-export-png" class="tb-btn accent">PNG</button>
+      <button id="btn-export-pdf" class="tb-btn accent">PDF</button>
+    </div>
+    <div id="tb-right">
+      <label class="tb-label">Escala
+        <select id="scale-select">
+          <option value="0.5">1:200</option>
+          <option value="1.0" selected>1:100</option>
+          <option value="2.0">1:50</option>
+          <option value="4.0">1:25</option>
+        </select>
+      </label>
+      <label class="tb-label">Tijolo
+        <select id="brick-select">
+          <option value="30x15x7" selected>30×15×7</option>
+          <option value="25x12x6">25×12,5×6</option>
+        </select>
+      </label>
+      <button id="btn-snap" class="tb-btn pill active" title="Snap">⊞ Snap</button>
+      <button id="btn-help" class="tb-btn pill" title="Ajuda">? Ajuda</button>
+      <span id="save-status"></span>
+    </div>
+  </header>
+
+  <div id="workspace">
+
+    <!-- LEFT PANEL -->
+    <aside id="left-panel">
+
+      <!-- FERRAMENTAS -->
+      <section class="cat open" data-id="tools">
+        <div class="cat-hd">🔧 Ferramentas</div>
+        <div class="cat-bd">
+          <div class="tool-grid">
+            <button class="tool-btn active" data-tool="select" title="S">↖ Selecionar</button>
+            <button class="tool-btn"        data-tool="wall"   title="W">▬ Parede</button>
+            <button class="tool-btn"        data-tool="erase"  title="E">✕ Apagar</button>
+            <button class="tool-btn"        data-tool="dimension" title="D">↔ Cota</button>
+          </div>
+          <div class="sub open" data-id="cfg-wall">
+            <div class="sub-hd">Config. Parede</div>
+            <div class="sub-bd">
+              <div class="prop-row">
+                <span>Espessura</span>
+                <select id="wall-thickness">
+                  <option value="15" selected>15 cm</option>
+                  <option value="30">30 cm</option>
+                  <option value="12.5">12,5 cm</option>
+                  <option value="25">25 cm</option>
+                  <option value="10">10 cm</option>
+                </select>
+              </div>
+              <div class="prop-row">
+                <span>Tijolo</span><input type="color" id="wall-col-body"   value="#C85C2D">
+              </div>
+              <div class="prop-row">
+                <span>Argamassa</span><input type="color" id="wall-col-mortar" value="#3D8B7A">
+              </div>
+              <label class="chk-row">
+                <input type="checkbox" id="snap-90" checked>
+                Travar 90° automático
+              </label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CÔMODOS PRONTOS -->
+      <section class="cat open" data-id="rooms-quick">
+        <div class="cat-hd">🏠 Cômodo Pronto</div>
+        <div class="cat-bd">
+          <p class="tip">Arraste um cômodo para a planta</p>
+          <div class="room-dim-row">
+            <label>L<input type="number" id="room-preset-w" value="3.0" step="0.5" min="1" max="50"></label>
+            <span>×</span>
+            <label>C<input type="number" id="room-preset-h" value="3.0" step="0.5" min="1" max="50"></label>
+            <span class="dim-unit">m</span>
+          </div>
+          <div class="room-presets">
+            <button class="room-btn" data-rw="200" data-rh="200">2×2</button>
+            <button class="room-btn" data-rw="300" data-rh="300">3×3</button>
+            <button class="room-btn" data-rw="300" data-rh="400">3×4</button>
+            <button class="room-btn" data-rw="400" data-rh="400">4×4</button>
+            <button class="room-btn" data-rw="300" data-rh="500">3×5</button>
+            <button class="room-btn" data-rw="400" data-rh="500">4×5</button>
+            <button class="room-btn" data-rw="500" data-rh="500">5×5</button>
+            <button class="room-btn" data-rw="0"   data-rh="0" id="room-custom-btn">✏ Custom</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ABERTURAS -->
+      <section class="cat" data-id="openings">
+        <div class="cat-hd">🚪 Aberturas</div>
+        <div class="cat-bd hidden">
+          <div class="sub open" data-id="sub-doors">
+            <div class="sub-hd">Portas</div>
+            <div class="sub-bd">
+              <div class="elem-grid">
+                <button class="elem-btn" data-type="door_standard">🚪 Simples</button>
+                <button class="elem-btn" data-type="door_double">🚪🚪 Dupla</button>
+                <button class="elem-btn" data-type="door_glass">🪟 Vidro</button>
+                <button class="elem-btn" data-type="door_slide">↔ Correr</button>
+                <button class="elem-btn" data-type="door_fold">≋ Camarão</button>
+              </div>
+            </div>
+          </div>
+          <div class="sub open" data-id="sub-windows">
+            <div class="sub-hd">Janelas</div>
+            <div class="sub-bd">
+              <div class="elem-grid">
+                <button class="elem-btn" data-type="window">🔲 Comum</button>
+                <button class="elem-btn" data-type="window_corner">⬜ Canto</button>
+                <button class="elem-btn" data-type="window_bay">⬛ Bow</button>
+              </div>
+            </div>
+          </div>
+          <div class="sub open" data-id="sub-gates">
+            <div class="sub-hd">Portões</div>
+            <div class="sub-bd">
+              <div class="elem-grid">
+                <button class="elem-btn" data-type="gate">⬛ Portão</button>
+                <button class="elem-btn" data-type="gate_slide">↔ Correr</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- COZINHA -->
+      <section class="cat" data-id="kitchen">
+        <div class="cat-hd">🍳 Cozinha</div>
+        <div class="cat-bd hidden">
+          <div class="sub open" data-id="sub-cabs">
+            <div class="sub-hd">Armários</div>
+            <div class="sub-bd">
+              <div class="elem-grid">
+                <button class="elem-btn" data-type="cabinet_upper">📦 Alto</button>
+                <button class="elem-btn" data-type="cabinet_lower">📦 Baixo</button>
+                <button class="elem-btn" data-type="cabinet_corner45">📐 45°</button>
+                <button class="elem-btn" data-type="cabinet_corner90">📐 90°</button>
+                <button class="elem-btn" data-type="cabinet_island">🏝 Ilha</button>
+              </div>
+            </div>
+          </div>
+          <div class="sub open" data-id="sub-appl">
+            <div class="sub-hd">Eletrodomésticos</div>
+            <div class="sub-bd">
+              <div class="elem-grid">
+                <button class="elem-btn" data-type="fridge">❄ Geladeira</button>
+                <button class="elem-btn" data-type="fridge_two_door">❄ 2 Portas</button>
+                <button class="elem-btn" data-type="stove">🔥 Fogão 4B</button>
+                <button class="elem-btn" data-type="stove_6">🔥 Fogão 6B</button>
+                <button class="elem-btn" data-type="oven">🔲 Forno</button>
+                <button class="elem-btn" data-type="microwave">📡 Microondas</button>
+                <button class="elem-btn" data-type="dishwasher">🫧 L.Louças</button>
+                <button class="elem-btn" data-type="washing_machine">🔄 Lavadora</button>
+                <button class="elem-btn" data-type="dryer">💨 Secadora</button>
+              </div>
+            </div>
+          </div>
+          <div class="sub open" data-id="sub-ksinks">
+            <div class="sub-hd">Pias</div>
+            <div class="sub-bd">
+              <div class="elem-grid">
+                <button class="elem-btn" data-type="sink_kitchen">🚿 1 Cuba</button>
+                <button class="elem-btn" data-type="sink_kitchen_double">🚿 2 Cubas</button>
+                <button class="elem-btn" data-type="bbq">🔥 Churrasqueira</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- BANHEIRO -->
+      <section class="cat" data-id="bathroom">
+        <div class="cat-hd">🛁 Banheiro</div>
+        <div class="cat-bd hidden">
+          <div class="sub open" data-id="sub-san">
+            <div class="sub-hd">Sanitários</div>
+            <div class="sub-bd">
+              <div class="elem-grid">
+                <button class="elem-btn" data-type="toilet">🚽 Vaso</button>
+                <button class="elem-btn" data-type="bidet">🪣 Bidê</button>
+              </div>
+            </div>
+          </div>
+          <div class="sub open" data-id="sub-bath">
+            <div class="sub-hd">Banho</div>
+            <div class="sub-bd">
+              <div class="elem-grid">
+                <button class="elem-btn" data-type="shower">🚿 Chuveiro</button>
+                <button class="elem-btn" data-type="shower_cabin">⬜ Box</button>
+                <button class="elem-btn" data-type="bathtub">🛁 Banheira</button>
+                <button class="elem-btn" data-type="jacuzzi">💦 Jacuzzi</button>
+              </div>
+            </div>
+          </div>
+          <div class="sub open" data-id="sub-bsinks">
+            <div class="sub-hd">Pias &amp; Móveis</div>
+            <div class="sub-bd">
+              <div class="elem-grid">
+                <button class="elem-btn" data-type="sink_bath">🪣 Pia</button>
+                <button class="elem-btn" data-type="sink_bath_double">🪣 Dupla</button>
+                <button class="elem-btn" data-type="cabinet_bath">🗄 Armário</button>
+                <button class="elem-btn" data-type="towel_rack">🪜 Toalh.</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- QUARTO -->
+      <section class="cat" data-id="bedroom">
+        <div class="cat-hd">🛏 Quarto</div>
+        <div class="cat-bd hidden">
+          <div class="sub open" data-id="sub-beds">
+            <div class="sub-hd">Camas</div>
+            <div class="sub-bd">
+              <div class="elem-grid">
+                <button class="elem-btn" data-type="bed_single">🛏 Solteiro</button>
+                <button class="elem-btn" data-type="bed_double">🛏 Casal</button>
+                <button class="elem-btn" data-type="bed_queen">🛏 Queen</button>
+                <button class="elem-btn" data-type="bed_king">🛏 King</button>
+                <button class="elem-btn" data-type="bed_bunk">🛏 Beliche</button>
+                <button class="elem-btn" data-type="crib">🛏 Berço</button>
+              </div>
+            </div>
+          </div>
+          <div class="sub open" data-id="sub-bfurn">
+            <div class="sub-hd">Móveis</div>
+            <div class="sub-bd">
+              <div class="elem-grid">
+                <button class="elem-btn" data-type="wardrobe">🗄 Guarda-roupa</button>
+                <button class="elem-btn" data-type="wardrobe_walk">🗄 Walk-in</button>
+                <button class="elem-btn" data-type="dresser">🗃 Cômoda</button>
+                <button class="elem-btn" data-type="nightstand">📦 Criado-mudo</button>
+                <button class="elem-btn" data-type="vanity">💄 Penteadeira</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SALA -->
+      <section class="cat" data-id="living">
+        <div class="cat-hd">🛋 Sala / Estar</div>
+        <div class="cat-bd hidden">
+          <div class="sub open" data-id="sub-sofas">
+            <div class="sub-hd">Estofados</div>
+            <div class="sub-bd">
+              <div class="elem-grid">
+                <button class="elem-btn" data-type="sofa">🛋 Sofá 2L</button>
+                <button class="elem-btn" data-type="sofa_3">🛋 Sofá 3L</button>
+                <button class="elem-btn" data-type="sofa_corner">🛋 Canto</button>
+                <button class="elem-btn" data-type="armchair">🪑 Poltrona</button>
+                <button class="elem-btn" data-type="chaise">🛋 Chaise</button>
+              </div>
+            </div>
+          </div>
+          <div class="sub open" data-id="sub-tables">
+            <div class="sub-hd">Mesas</div>
+            <div class="sub-bd">
+              <div class="elem-grid">
+                <button class="elem-btn" data-type="table_coffee">☕ Centro</button>
+                <button class="elem-btn" data-type="table_dining">🍽 Jantar 4L</button>
+                <button class="elem-btn" data-type="table_dining_6">🍽 Jantar 6L</button>
+                <button class="elem-btn" data-type="table_dining_8">🍽 Jantar 8L</button>
+                <button class="elem-btn" data-type="table_round">🔵 Redonda</button>
+                <button class="elem-btn" data-type="chair">🪑 Cadeira</button>
+                <button class="elem-btn" data-type="bench">─ Banco</button>
+              </div>
+            </div>
+          </div>
+          <div class="sub open" data-id="sub-entert">
+            <div class="sub-hd">Entretenimento</div>
+            <div class="sub-bd">
+              <div class="elem-grid">
+                <button class="elem-btn" data-type="tv">📺 TV</button>
+                <button class="elem-btn" data-type="tv_stand">📺 Rack</button>
+                <button class="elem-btn" data-type="bookshelf">📚 Estante</button>
+                <button class="elem-btn" data-type="bar_cabinet">🍾 Bar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ESCRITÓRIO -->
+      <section class="cat" data-id="office">
+        <div class="cat-hd">💻 Escritório</div>
+        <div class="cat-bd hidden">
+          <div class="elem-grid">
+            <button class="elem-btn" data-type="desk">💻 Escrivaninha</button>
+            <button class="elem-btn" data-type="desk_l">📐 Mesa L</button>
+            <button class="elem-btn" data-type="table_meeting">👥 Reunião</button>
+            <button class="elem-btn" data-type="desk_chair">🪑 Cad.Escrit.</button>
+            <button class="elem-btn" data-type="filing_cabinet">🗄 Arquivo</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- EXTERNO -->
+      <section class="cat" data-id="outdoor">
+        <div class="cat-hd">🌳 Externo</div>
+        <div class="cat-bd hidden">
+          <div class="sub open" data-id="sub-plants">
+            <div class="sub-hd">Vegetação</div>
+            <div class="sub-bd">
+              <div class="elem-grid">
+                <button class="elem-btn" data-type="tree">🌳 Árvore</button>
+                <button class="elem-btn" data-type="tree_palm">🌴 Palmeira</button>
+                <button class="elem-btn" data-type="bush">🌿 Arbusto</button>
+                <button class="elem-btn" data-type="plant_small">🌱 Planta</button>
+                <button class="elem-btn" data-type="lawn">🟩 Gramado</button>
+                <button class="elem-btn" data-type="garden_bed">🌺 Canteiro</button>
+              </div>
+            </div>
+          </div>
+          <div class="sub open" data-id="sub-leisure">
+            <div class="sub-hd">Lazer</div>
+            <div class="sub-bd">
+              <div class="elem-grid">
+                <button class="elem-btn" data-type="pool">🏊 Piscina</button>
+                <button class="elem-btn" data-type="pool_round">⭕ P. Redonda</button>
+                <button class="elem-btn" data-type="pergola">⛩ Pérgola</button>
+                <button class="elem-btn" data-type="bbq_ext">🔥 Churrasqueira</button>
+                <button class="elem-btn" data-type="deck">🪵 Deck</button>
+                <button class="elem-btn" data-type="table_outdoor">🍽 Mesa Ext.</button>
+                <button class="elem-btn" data-type="chair_outdoor">🪑 Cad.Ext.</button>
+              </div>
+            </div>
+          </div>
+          <div class="sub open" data-id="sub-vehicles">
+            <div class="sub-hd">Veículos</div>
+            <div class="sub-bd">
+              <div class="elem-grid">
+                <button class="elem-btn" data-type="car">🚗 Carro</button>
+                <button class="elem-btn" data-type="car_suv">🚙 SUV</button>
+                <button class="elem-btn" data-type="moto">🏍 Moto</button>
+              </div>
+            </div>
+          </div>
+          <div class="sub open" data-id="sub-struct">
+            <div class="sub-hd">Estruturas</div>
+            <div class="sub-bd">
+              <div class="elem-grid">
+                <button class="elem-btn" data-type="stairs">🪜 Escada</button>
+                <button class="elem-btn" data-type="stairs_spiral">🌀 Espiral</button>
+                <button class="elem-btn" data-type="ramp">↗ Rampa</button>
+                <button class="elem-btn" data-type="fence">⬜ Cerca</button>
+                <button class="elem-btn" data-type="water_tank">💧 Caixa d'Água</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ANOTAÇÕES -->
+      <section class="cat" data-id="annots">
+        <div class="cat-hd">📐 Anotações</div>
+        <div class="cat-bd hidden">
+          <div class="elem-grid">
+            <button class="elem-btn" data-type="north_arrow">🧭 Norte</button>
+            <button class="elem-btn" data-type="text_label">🔤 Texto</button>
+            <button class="tool-btn full" data-tool="dimension">↔ Cota</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- CAMADAS -->
+      <section class="cat" data-id="layers">
+        <div class="cat-hd">🗂 Camadas</div>
+        <div class="cat-bd hidden">
+          <label class="chk-row"><input type="checkbox" id="layer-grid"        checked> Grade</label>
+          <label class="chk-row"><input type="checkbox" id="layer-foundation"  checked> Cômodos</label>
+          <label class="chk-row"><input type="checkbox" id="layer-walls"       checked> Paredes</label>
+          <label class="chk-row"><input type="checkbox" id="layer-furniture"   checked> Móveis</label>
+          <label class="chk-row"><input type="checkbox" id="layer-annotations" checked> Cotas</label>
+        </div>
+      </section>
+
+    </aside>
+
+    <!-- CANVAS -->
+    <main id="canvas-wrap">
+      <canvas id="main-canvas"></canvas>
+      <div id="canvas-info">
+        <span id="cursor-pos">0,00 × 0,00 m</span>
+        <span id="zoom-level">100%</span>
+      </div>
+    </main>
+
+    <!-- RIGHT PANEL -->
+    <aside id="right-panel">
+      <div id="props-header">Propriedades</div>
+      <div id="props-body">
+        <p class="hint">Selecione um elemento para editar.</p>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<!-- DRAG GHOST (created by JS) -->
+<div id="drag-ghost"></div>
+
+<!-- MODAL TERRENO -->
+<div id="modal-terrain" class="modal-ov">
+  <div class="modal">
+    <h2>🧱 Novo Projeto</h2>
+    <div class="mform">
+      <label>Nome do Projeto<input type="text" id="m-name" value="Minha Casa"></label>
+      <div class="mrow">
+        <label>Largura (m)<input type="number" id="m-w" value="15" min="3" max="300" step="0.5"></label>
+        <label>Comprimento (m)<input type="number" id="m-h" value="12" min="3" max="300" step="0.5"></label>
+      </div>
+      <label>Grade<select id="m-grid">
+        <option value="10">10 cm</option>
+        <option value="15" selected>15 cm</option>
+        <option value="25">25 cm</option>
+        <option value="50">50 cm</option>
+      </select></label>
+      <label>Tipo de tijolo<select id="m-brick">
+        <option value="30x15x7" selected>30×15×7 cm (padrão)</option>
+        <option value="25x12x6">25×12,5×6 cm</option>
+      </select></label>
+    </div>
+    <div class="mactions">
+      <button id="btn-create" class="btn-ok">✔ Criar Projeto</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AJUDA -->
+<div id="modal-help" class="modal-ov hidden">
+  <div class="modal wide">
+    <h2>📖 Atalhos</h2>
+    <div class="help-cols">
+      <div><h3>Ferramentas</h3>
+        <table>
+          <tr><td><kbd>S</kbd></td><td>Selecionar</td></tr>
+          <tr><td><kbd>W</kbd></td><td>Parede</td></tr>
+          <tr><td><kbd>E</kbd></td><td>Apagar</td></tr>
+          <tr><td><kbd>D</kbd></td><td>Cota</td></tr>
+          <tr><td><kbd>Esc</kbd></td><td>Cancelar</td></tr>
+        </table>
+      </div>
+      <div><h3>Ações</h3>
+        <table>
+          <tr><td><kbd>Ctrl+Z</kbd></td><td>Desfazer</td></tr>
+          <tr><td><kbd>Ctrl+Y</kbd></td><td>Refazer</td></tr>
+          <tr><td><kbd>Ctrl+D</kbd></td><td>Duplicar</td></tr>
+          <tr><td><kbd>Del</kbd></td><td>Apagar</td></tr>
+          <tr><td><kbd>?</kbd></td><td>Ajuda</td></tr>
+        </table>
+      </div>
+      <div><h3>Navegação</h3>
+        <table>
+          <tr><td>Scroll</td><td>Zoom</td></tr>
+          <tr><td>Espaço+drag</td><td>Pan</td></tr>
+          <tr><td>Shift</td><td>Desliga trava 90°</td></tr>
+          <tr><td>Duplo-clique</td><td>Renomear cômodo</td></tr>
+          <tr><td>Arraste do painel</td><td>Colocar elemento</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="mactions"><button id="btn-help-close" class="btn-ok">Fechar</button></div>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div id="ctx-menu" class="ctx hidden">
+  <div class="ctx-i" id="ctx-dup">📋 Duplicar</div>
+  <div class="ctx-i" id="ctx-front">⬆ Frente</div>
+  <div class="ctx-i" id="ctx-back">⬇ Trás</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-i danger" id="ctx-del">🗑 Apagar</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
