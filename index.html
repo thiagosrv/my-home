@@ -29,6 +29,7 @@
       <button id="btn-new"  class="tb-btn">Novo</button>
       <button id="btn-save" class="tb-btn">Salvar</button>
       <label  id="lbl-load" class="tb-btn">Abrir<input id="file-input" type="file" accept=".json"></label>
+      <button id="btn-cloud" class="tb-btn accent" title="Projetos na Nuvem">☁ Nuvem</button>
       <div class="tb-sep"></div>
       <button id="btn-export-png" class="tb-btn accent">PNG</button>
       <button id="btn-export-pdf" class="tb-btn accent">PDF</button>
@@ -498,6 +499,19 @@
       </div>
     </div>
     <div class="mactions"><button id="btn-help-close" class="btn-ok">Fechar</button></div>
+  </div>
+</div>
+
+<!-- MODAL NUVEM -->
+<div id="modal-cloud" class="modal-ov hidden">
+  <div class="modal wide">
+    <h2>☁ Projetos na Nuvem</h2>
+    <div id="cloud-status" class="cloud-status"></div>
+    <div id="cloud-list"><p class="hint">Carregando projetos...</p></div>
+    <div class="mactions" style="gap:10px; justify-content:space-between">
+      <button id="btn-cloud-save" class="btn-ok">💾 Salvar Projeto Atual</button>
+      <button id="btn-cloud-close" class="btn-cloud-cancel">✕ Fechar</button>
+    </div>
   </div>
 </div>
 

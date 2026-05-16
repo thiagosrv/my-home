@@ -326,6 +326,41 @@ kbd {
 ::-webkit-scrollbar-thumb { background: var(--border-med); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2); }
 
+/* ── CLOUD MODAL ─────────────────────────────────────────────────── */
+.cloud-status {
+  font-size: 12px; padding: 6px 10px; border-radius: var(--r);
+  margin-bottom: 12px; display: none;
+}
+.cloud-status.ok  { background: rgba(42,122,104,0.09); color: var(--mortar); display: block; }
+.cloud-status.err { background: rgba(192,57,43,0.09);  color: #c0392b; display: block; }
+
+#cloud-list { max-height: 340px; overflow-y: auto; margin-bottom: 6px; }
+.cloud-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: var(--r); border: 1px solid var(--border);
+  margin-bottom: 6px; background: var(--panel-deep); transition: background .13s;
+}
+.cloud-row:hover { background: var(--primary-dim); border-color: var(--accent-line); }
+.cloud-row-name { flex: 1; font-weight: 600; font-size: 13px; color: var(--text); }
+.cloud-row-date { font-size: 11px; color: var(--dim); white-space: nowrap; }
+.cloud-row-actions { display: flex; gap: 5px; }
+.btn-cloud-load {
+  background: var(--primary); border: none; border-radius: var(--r);
+  color: #fff; padding: 5px 11px; font-size: 11px; cursor: pointer;
+  font-weight: 600; transition: opacity .13s;
+}
+.btn-cloud-load:hover { opacity: .85; }
+.btn-cloud-del {
+  background: transparent; border: 1px solid rgba(192,57,43,0.25); border-radius: var(--r);
+  color: #c0392b; padding: 5px 9px; font-size: 11px; cursor: pointer; transition: all .13s;
+}
+.btn-cloud-del:hover { background: rgba(192,57,43,0.06); }
+.btn-cloud-cancel {
+  background: var(--panel-deep); border: 1px solid var(--border); border-radius: var(--r);
+  color: var(--dim); padding: 9px 18px; font-size: 13px; cursor: pointer; transition: all .13s;
+}
+.btn-cloud-cancel:hover { background: var(--panel); color: var(--text); }
+
 /* ── RESPONSIVE / TOUCH ──────────────────────────────────────── */
 @media (max-width: 768px) {
   :root { --lw: 200px; --rw: 0px; --top: 50px; }

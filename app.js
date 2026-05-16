@@ -1583,6 +1583,7 @@ function fitTerrain(tgt){
 
 document.addEventListener('DOMContentLoaded',()=>{
   resizeCanvas();
+  initDB().catch(()=>{});
   try{
     const saved=localStorage.getItem('ecobrick_v1');
     if(saved){const d=JSON.parse(saved);if(d.S)S=d.S;if(d.V)V=d.V;
@@ -1592,4 +1593,129 @@ document.addEventListener('DOMContentLoaded',()=>{
   }catch(e){}
   document.getElementById('modal-terrain').style.display='flex';
   requestRender();
+});
+
+// ── 16. TURSO CLOUD ───────────────────────────────────────────────
+const TURSO_URL='https://my-home-thiagosrv.aws-us-east-2.turso.io';
+const TURSO_TOKEN='eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3Nzg5NjY4NTIsImlkIjoiMDE5ZTMyYWYtY2YwMS03MWEwLTk1NzAtN2E1Y2JlZmUzNTg1IiwicmlkIjoiYmZiYzJkZDAtMTUyMC00NzE1LTg3MjUtYTkwZDQxNDZjZTFkIn0.h5_h88wQ4AV5bRoKlho1H5ZkzEGtORq-jKdYR6kiNyPyQzVKprs7XYUYz5yFryosn54KGl6QkD99_dw12QzjDA';
+
+async function tursoExec(sql, args=[]){
+  const res=await fetch(`${TURSO_URL}/v2/pipeline`,{
+    method:'POST',
+    headers:{'Authorization':`Bearer ${TURSO_TOKEN}`,'Content-Type':'application/json'},
+    body:JSON.stringify({requests:[
+      {type:'execute',stmt:{sql,args:args.map(v=>({type:'text',value:String(v)}))}},
+      {type:'close'}
+    ]})
+  });
+  if(!res.ok) throw new Error(`Turso HTTP ${res.status}`);
+  const j=await res.json();
+  if(j.results&&j.results[0]&&j.results[0].type==='error') throw new Error(j.results[0].error.message);
+  return j.results[0]?.response?.result;
+}
+
+async function initDB(){
+  await tursoExec(`CREATE TABLE IF NOT EXISTS projects (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    data TEXT NOT NULL,
+    created_at INTEGER DEFAULT (unixepoch()),
+    updated_at INTEGER DEFAULT (unixepoch())
+  )`);
+}
+
+async function cloudSave(){
+  if(!S.meta.id) S.meta.id=newId();
+  const name=S.meta.name||'Minha Casa';
+  const data=JSON.stringify({S,V});
+  await tursoExec(
+    `INSERT INTO projects(id,name,data,updated_at) VALUES(?,?,?,unixepoch())
+     ON CONFLICT(id) DO UPDATE SET name=excluded.name,data=excluded.data,updated_at=excluded.updated_at`,
+    [S.meta.id,name,data]
+  );
+  return name;
+}
+
+async function cloudList(){
+  const r=await tursoExec('SELECT id,name,updated_at FROM projects ORDER BY updated_at DESC LIMIT 50');
+  return (r?.rows||[]).map(row=>({id:row[0].value,name:row[1].value,ts:parseInt(row[2].value)}));
+}
+
+async function cloudLoad(id){
+  const r=await tursoExec('SELECT data FROM projects WHERE id=?',[id]);
+  const row=r?.rows?.[0];
+  if(!row) throw new Error('Projeto não encontrado');
+  return JSON.parse(row[0].value);
+}
+
+async function cloudDelete(id){
+  await tursoExec('DELETE FROM projects WHERE id=?',[id]);
+}
+
+function fmtDate(ts){
+  const d=new Date(ts*1000);
+  return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+
+function cloudStatus(msg,type){
+  const el=document.getElementById('cloud-status');
+  el.textContent=msg; el.className='cloud-status '+(type||'ok');
+  if(type==='ok') setTimeout(()=>{el.className='cloud-status';},3000);
+}
+
+async function openCloudModal(){
+  const modal=document.getElementById('modal-cloud');
+  modal.classList.remove('hidden');
+  const list=document.getElementById('cloud-list');
+  const status=document.getElementById('cloud-status');
+  status.className='cloud-status';
+  list.innerHTML='<p class="hint">Carregando...</p>';
+  try{
+    const projects=await cloudList();
+    if(!projects.length){ list.innerHTML='<p class="hint">Nenhum projeto salvo na nuvem.</p>'; return; }
+    list.innerHTML=projects.map(p=>`
+      <div class="cloud-row">
+        <span class="cloud-row-name">${p.name}</span>
+        <span class="cloud-row-date">${fmtDate(p.ts)}</span>
+        <div class="cloud-row-actions">
+          <button class="btn-cloud-load" data-id="${p.id}">Abrir</button>
+          <button class="btn-cloud-del"  data-id="${p.id}">🗑</button>
+        </div>
+      </div>`).join('');
+    list.querySelectorAll('.btn-cloud-load').forEach(b=>b.addEventListener('click',async()=>{
+      b.textContent='...';b.disabled=true;
+      try{
+        const d=await cloudLoad(b.dataset.id);
+        if(d.S)S=d.S;if(d.V)V=d.V;
+        document.getElementById('project-name').value=S.meta.name||'';
+        computeCorners();detectRooms();fitTerrain();
+        modal.classList.add('hidden');
+        cloudStatus('Projeto carregado!','ok');
+      }catch(e){cloudStatus('Erro ao carregar: '+e.message,'err');}
+    }));
+    list.querySelectorAll('.btn-cloud-del').forEach(b=>b.addEventListener('click',async()=>{
+      if(!confirm('Deletar este projeto da nuvem?')) return;
+      b.textContent='...';b.disabled=true;
+      try{ await cloudDelete(b.dataset.id); await openCloudModal(); }
+      catch(e){ cloudStatus('Erro ao deletar: '+e.message,'err'); }
+    }));
+  }catch(e){
+    list.innerHTML=`<p class="hint" style="color:#c0392b">Erro ao conectar: ${e.message}</p>`;
+  }
+}
+
+document.getElementById('btn-cloud').addEventListener('click',openCloudModal);
+document.getElementById('btn-cloud-close').addEventListener('click',()=>document.getElementById('modal-cloud').classList.add('hidden'));
+document.getElementById('btn-cloud-save').addEventListener('click',async()=>{
+  const btn=document.getElementById('btn-cloud-save');
+  btn.textContent='Salvando...';btn.disabled=true;
+  try{
+    const name=await cloudSave();
+    cloudStatus(`"${name}" salvo na nuvem ✓`,'ok');
+    await openCloudModal();
+  }catch(e){
+    cloudStatus('Erro ao salvar: '+e.message,'err');
+  }finally{
+    btn.textContent='💾 Salvar Projeto Atual';btn.disabled=false;
+  }
 });
