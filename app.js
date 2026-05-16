@@ -1596,13 +1596,10 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 
 // ── 16. TURSO CLOUD ───────────────────────────────────────────────
-const TURSO_URL='https://my-home-thiagosrv.aws-us-east-2.turso.io';
-const TURSO_TOKEN='eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3Nzg5NjY4NTIsImlkIjoiMDE5ZTMyYWYtY2YwMS03MWEwLTk1NzAtN2E1Y2JlZmUzNTg1IiwicmlkIjoiYmZiYzJkZDAtMTUyMC00NzE1LTg3MjUtYTkwZDQxNDZjZTFkIn0.h5_h88wQ4AV5bRoKlho1H5ZkzEGtORq-jKdYR6kiNyPyQzVKprs7XYUYz5yFryosn54KGl6QkD99_dw12QzjDA';
-
 async function tursoExec(sql, args=[]){
-  const res=await fetch(`${TURSO_URL}/v2/pipeline`,{
+  const res=await fetch('/api/turso',{
     method:'POST',
-    headers:{'Authorization':`Bearer ${TURSO_TOKEN}`,'Content-Type':'application/json'},
+    headers:{'Content-Type':'application/json'},
     body:JSON.stringify({requests:[
       {type:'execute',stmt:{sql,args:args.map(v=>({type:'text',value:String(v)}))}},
       {type:'close'}
